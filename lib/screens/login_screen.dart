@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 60),
                 SizedBox(
                   width: 350,
                   child: inputField('Email', Icons.email_outlined, controller: emailController),
