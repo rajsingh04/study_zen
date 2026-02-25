@@ -38,15 +38,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 100),
                 SizedBox(
                   width: 350,
-                  child: inputField('Email', Icons.email_outlined, controller: emailController),
+                  child: inputField(
+                    'Email',
+                    Icons.email_outlined,
+                    controller: emailController,
+                  ),
                 ),
                 const SizedBox(height: 30),
                 SizedBox(
                   width: 350,
-                  child: inputField('Password', Icons.lock_outline, isPassword: true, controller: passwordController),
+                  child: inputField(
+                    'Password',
+                    Icons.lock_outline,
+                    isPassword: true,
+                    controller: passwordController,
+                  ),
                 ),
                 const SizedBox(height: 30),
                 SizedBox(width: 350, child: styledButton("Login", () {})),
@@ -55,7 +64,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   onTap: () {},
                   child: Text(
                     "Forgot Password?",
-                    style: TextStyle(fontSize: 18, color: Color(0xFF6B90AD), fontWeight: FontWeight.w400),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF6B90AD),
+                      fontWeight: FontWeight.w400,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -64,16 +77,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                  Text("Don't have an account?", style: TextStyle(fontSize: 18, color: Colors.black54)),
-                  const SizedBox(width: 5),
-                  InkWell(
-                    onTap: () {},
-                    child: Text(
-                      "Sign Up",
-                      style: TextStyle(fontSize: 18, color: Color(0xFF6B90AD), fontWeight: FontWeight.w500),
+                    Text(
+                      "Don't have an account?",
+                      style: TextStyle(fontSize: 18, color: Colors.black54),
                     ),
-                  )
-                ],)
+                    const SizedBox(width: 5),
+                    InkWell(
+                      onTap: () {},
+                      child: Text(
+                        "Sign Up",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF6B90AD),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
