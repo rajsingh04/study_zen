@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:study_zen/utils/widget_style.dart';
-import 'register_screen.dart';
+import 'login_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF8FBFB), Color(0xFFE2F1ED)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            stops: [0.0, 1.0],
           ),
         ),
         child: Center(
@@ -30,16 +31,33 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset('assets/images/icon_with_title.jpeg', height: 200),
+
                 const SizedBox(height: 30),
-                Text(
-                  'Welcome back to StudyZen.',
+
+                const Text(
+                  'Create Account',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 100),
+
+                const SizedBox(height: 80),
+
+                // Full Name Field
+                SizedBox(
+                  width: 350,
+                  child: inputField(
+                    'Full Name',
+                    Icons.person_outline,
+                    controller: nameController,
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Email Field
                 SizedBox(
                   width: 350,
                   child: inputField(
@@ -48,7 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: emailController,
                   ),
                 ),
+
                 const SizedBox(height: 30),
+
+                // Password Field
                 SizedBox(
                   width: 350,
                   child: inputField(
@@ -58,46 +79,42 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: passwordController,
                   ),
                 ),
+
                 const SizedBox(height: 30),
-                SizedBox(width: 350, child: styledButton("Login", () {})),
-                const SizedBox(height: 30),
-                InkWell(
-                  onTap: () {},
-                  child: Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Color(0xFF6B90AD),
-                      fontWeight: FontWeight.w400,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+
+                // Register Button
+                SizedBox(
+                  width: 350,
+                  child: styledButton("Register", () {
+                    // Add registration logic here
+                  }),
                 ),
-                const SizedBox(height: 60),
+
+                const SizedBox(height: 40),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      "Don't have an account?",
-                      style: TextStyle(fontSize: 18, color: Colors.black54),
+                    const Text(
+                      "Already have an account?",
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
                     ),
                     const SizedBox(width: 5),
                     InkWell(
                       onTap: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
+                            builder: (context) => const LoginScreen(),
                           ),
                         );
                       },
-                      child: Text(
-                        "Sign Up",
+                      child: const Text(
+                        "Login",
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           color: Color(0xFF6B90AD),
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
