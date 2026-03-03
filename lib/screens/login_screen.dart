@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 100),
+                const SizedBox(height: 30),
                 SizedBox(
                   width: 350,
                   child: inputField(
