@@ -19,6 +19,10 @@ TextFormField inputField(String hint, IconData icon, {bool isPassword = false, T
         borderSide: BorderSide(color: Colors.red.shade300, width: 2),
         borderRadius: BorderRadius.circular(20),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.red.shade500, width: 2),
+        borderRadius: BorderRadius.circular(20),
+      ),
       filled: true,
       fillColor: Colors.white,
       prefixIcon: Icon(icon, color: Colors.grey),
@@ -35,9 +39,9 @@ Gradient backgroundGradient() {
   );
 }
 
-ElevatedButton styledButton(String text, VoidCallback onPressed) {
+ElevatedButton styledButton(String text, VoidCallback onPressed, bool isLoading) {
   return ElevatedButton(
-    onPressed: onPressed,
+    onPressed: isLoading ? null : onPressed,
     style: ElevatedButton.styleFrom(
       padding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -52,7 +56,7 @@ ElevatedButton styledButton(String text, VoidCallback onPressed) {
       child: Container(
         constraints: const BoxConstraints(minWidth: 88, minHeight: 44),
         alignment: Alignment.center,
-        child: Text(text, style: TextStyle(color: Colors.white, fontSize: 16)),
+        child: isLoading ? CircularProgressIndicator(color: Colors.white) : Text(text, style: TextStyle(color: Colors.white, fontSize: 16)),
       ),
     ),
   );
