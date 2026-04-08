@@ -12,8 +12,30 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+from urllib.parse import urlparse, parse_qs
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Load environment variables from a .env file if present
+# This allows DATABASE_URL (and others) defined in the project root .env
+# to be available via os.environ when running manage.py locally.
+env_path = BASE_DIR.parent / '.env'
+if env_path.exists():
+    with env_path.open() as f:
+        for line in f:
+            line = line.strip()
+            # Skip comments and empty lines
+            if not line or line.startswith('#'):
+                continue
+            key, sep, value = line.partition('=')
+            if not sep:
+                continue
+            key = key.strip()
+            # Do not override existing environment variables
+            if key and key not in os.environ:
+                os.environ[key] = value.strip().strip('"').strip("'")
 
 
 # Quick-start development settings - unsuitable for production
@@ -79,8 +101,31 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
+DATABASES = {}
+
+db_url = os.environ.get('DATABASE_URL')
+if db_url:
+    # Parse a PostgreSQL URL like postgresql://user:pass@host:port/dbname?params
+    parsed = urlparse(db_url)
+    query_params = parse_qs(parsed.query)
+
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': parsed.path.lstrip('/'),
+        'USER': parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST': parsed.hostname,
+        'PORT': parsed.port or '5432',
+        'OPTIONS': {},
+    }
+
+    # If sslmode=require is present, enable SSL
+    sslmode = query_params.get('sslmode', [''])[0]
+    if sslmode:
+        DATABASES['default']['OPTIONS']['sslmode'] = sslmode
+else:
+    # Fallback to local Postgres if DATABASE_URL is not set
+    DATABASES['default'] = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'study_zen_db',
         'USER': 'study_zen_db_admin',
@@ -88,7 +133,6 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432',
     }
-}
 
 
 # Password validation
