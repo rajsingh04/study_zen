@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'authentication',
+    'subject',
     'rest_framework',
     # token_blacklist removed because project uses a custom User model
     # that is not configured as AUTH_USER_MODEL. See notes below.

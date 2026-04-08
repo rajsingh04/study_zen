@@ -5,7 +5,8 @@ import 'package:study_zen/bloc/userbloc/user_state.dart';
 import 'package:study_zen/utils/widget_style.dart';
 import '../bloc/userbloc/user_event.dart';
 import 'register_screen.dart';
-import 'home_screen.dart';
+import 'student_home_screen.dart';
+import 'teacher_home_screen.dart';
 import 'package:study_zen/services/user_service.dart';
 import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
 
@@ -26,20 +27,20 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAutoLogin();
+    // _checkAutoLogin();
   }
 
-  void _checkAutoLogin() async {
-    final user = await _userService.getStoredUser();
-    if (user != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      });
-    }
-  }
+  // void _checkAutoLogin() async {
+  //   final user = await _userService.getStoredUser();
+  //   if (user != null) {
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
+  //       );
+  //     });
+  //   }
+  // }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,11 +55,19 @@ class _LoginScreenState extends State<LoginScreen> {
               label: 'Login successful',
               backgroundColor: Colors.green,
             );
-            // Replace current route with HomeScreen so user can't go back
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
+            // Navigate to appropriate home based on account type
+            final accountType = state.user.accountType.toUpperCase();
+            if (accountType == 'TEACHER') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const TeacherHomeScreen()),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
+              );
+            }
           } else if (state is UserError) {
             isLoading = false;
             IconSnackBar.show(
@@ -102,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 30),
                     SizedBox(
-                      width: 350,
+                      width: MediaQuery.of(context).size.width * 0.8,
                       child: inputField(
                         'Email',
                         Icons.email_outlined,
@@ -111,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 30),
                     SizedBox(
-                      width: 350,
+                      width: MediaQuery.of(context).size.width * 0.8,
                       child: inputField(
                         'Password',
                         Icons.lock_outline,
@@ -121,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 30),
                     SizedBox(
-                      width: 350,
+                      width: MediaQuery.of(context).size.width * 0.8,
                       child: styledButton("Login", () {
                         if (!_formKey.currentState!.validate()) {
                           return;

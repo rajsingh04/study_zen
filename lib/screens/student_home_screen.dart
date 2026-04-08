@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:study_zen/bloc/userbloc/user_bloc.dart';
 import 'package:study_zen/bloc/userbloc/user_state.dart';
+import 'package:study_zen/utils/widget_style.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class StudentHomeScreen extends StatelessWidget {
+  const StudentHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,27 +25,21 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.menu_book, color: Color(0xFF67B0A7), size: 30),
+                        Image.asset('assets/images/logo.png', height: 40, width: 40),
                         const SizedBox(width: 8),
-                        Row(
-                          children: const [
-                            Text(
-                              'Study',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF3B5B72),
-                              ),
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFF67B0A7), Color(0xFF81C39A)],
+                            stops: [0.3,1.0]
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Study Zen',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                            Text(
-                              'Zen',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFD49A36),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -99,39 +94,6 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 15),
-                // Page indicator (dots)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      height: 6,
-                      width: 16,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF7CA1AC),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      height: 6,
-                      width: 6,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      height: 6,
-                      width: 6,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 25),
 
                 // My Courses Section
@@ -164,15 +126,15 @@ class HomeScreen extends StatelessWidget {
                     clipBehavior: Clip.none, // to allow shadows
                     scrollDirection: Axis.horizontal,
                     children: [
-                      _buildCourseCard('Software Engineering', '30 Tasks', Icons.computer, const [Color(0xFF7CB8AA), Color(0xFF9CC9B0)]),
+                      courseCard('Software Engineering', '30 Tasks', Icons.computer, const [Color(0xFF7CB8AA), Color(0xFF9CC9B0)], width: 150),
                       const SizedBox(width: 15),
-                      _buildCourseCard('Design & Analysis of Algorithms', '25 Tasks', Icons.account_tree, const [Color(0xFF619CAB), Color(0xFF8DCBA1)]),
+                      courseCard('Design & Analysis of Algorithms', '25 Tasks', Icons.account_tree, const [Color(0xFF619CAB), Color(0xFF8DCBA1)], width: 200),
                       const SizedBox(width: 15),
-                      _buildCourseCard('Operation Research', '18 Tasks', Icons.analytics, const [Color(0xFF6A9DB9), Color(0xFF90C2C3)]),
+                      courseCard('Operation Research', '18 Tasks', Icons.analytics, const [Color(0xFF6A9DB9), Color(0xFF90C2C3)], width: 160),
                       const SizedBox(width: 15),
-                      _buildCourseCard('Cryptography & Network Security', '40 Tasks', Icons.security, const [Color(0xFF8DA3A6), Color(0xFFB5C3C6)]),
+                      courseCard('Cryptography & Network Security', '40 Tasks', Icons.security, const [Color(0xFF8DA3A6), Color(0xFFB5C3C6)], width: 220),
                       const SizedBox(width: 15),
-                      _buildCourseCard('Principal Management & Economics', '12 Tasks', Icons.business, const [Color(0xFF7D9C98), Color(0xFF9EBAB6)]),
+                      courseCard('Principal Management & Economics', '12 Tasks', Icons.business, const [Color(0xFF7D9C98), Color(0xFF9EBAB6)], width: 170),
                     ],
                   ),
                 ),
@@ -211,17 +173,17 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      _buildTaskItem('Assignment', '45 minutes', true),
+                      taskItem('Assignment', '45 minutes', true),
                       const Padding(
                         padding: EdgeInsets.only(left: 60, right: 20),
                         child: Divider(height: 1, color: Color(0xFFF0F0F0)),
                       ),
-                      _buildTaskItem('PYQ\'s', '60 minutes', false),
+                      taskItem('PYQ\'s', '60 minutes', false),
                       const Padding(
                         padding: EdgeInsets.only(left: 60, right: 20),
                         child: Divider(height: 1, color: Color(0xFFF0F0F0)),
                       ),
-                      _buildTaskItem('Question Bank', '30 minutes', false),
+                      taskItem('Question Bank', '30 minutes', false),
                     ],
                   ),
                 ),

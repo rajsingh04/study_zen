@@ -1,10 +1,11 @@
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from authentication import urls as authUrls
-from django.urls import include
+from subject import urls as subjectUrls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include(authUrls.urlpatterns)),
+    path('api/', include(subjectUrls)),  # /api/subjects/... endpoints
 ]

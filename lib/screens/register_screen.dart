@@ -86,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Full Name Field
                 SizedBox(
-                  width: 350,
+                  width: MediaQuery.of(context).size.width * 0.8,
                   child: inputField(
                     'Username',
                     Icons.person_outline,
@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Email Field
                 SizedBox(
-                  width: 350,
+                  width: MediaQuery.of(context).size.width * 0.8,
                   child: inputField(
                     'Email',
                     Icons.email_outlined,
@@ -110,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Password Field
                 SizedBox(
-                  width: 350,
+                  width: MediaQuery.of(context).size.width * 0.8,
                   child: inputField(
                     'Password',
                     Icons.lock_outline,
@@ -182,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           state.didChange(value);
                         },
                         hintText: "Select Account Type",
-                        width: 350,
+                        width: MediaQuery.of(context).size.width * 0.8,
                       ),
                       if (state.hasError)
                         Padding(
@@ -197,7 +197,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 30),
                 // Register Button
                 SizedBox(
-                  width: 350,
+                  width: MediaQuery.of(context).size.width * 0.8,
                   child: styledButton("Register", () {
                     if (!(_formKey.currentState?.validate() ?? false)) {
                       return;
