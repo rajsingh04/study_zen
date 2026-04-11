@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:study_zen/models/subject_model.dart';
+import 'package:study_zen/models/user_model.dart';
 import 'package:study_zen/utils/global.dart';
 
 class SubjectService {
@@ -167,6 +167,55 @@ class SubjectService {
       return {'success': true};
     } else {
       return {'success': false, 'error': _extractError(response.body)};
+    }
+  }
+
+  Future<List<UserModel>> fetchEnrolledStudents(int subjectId) async {
+    final token = await _getAccessToken();
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(
+      Uri.parse('$uri/api/subjects/$subjectId/students/'),
+      headers: headers,
+    );
+
+    final body = response.body;
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final List<dynamic> data = jsonDecode(body);
+      return data.map((e) => UserModel.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception(_extractError(body));
+    }
+  }
+
+  Future<Map<String, dynamic>> removeStudentFromSubject(int subjectId, int userId) async {
+    final token = await _getAccessToken();
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.delete(
+      Uri.parse('$uri/api/subjects/$subjectId/students/$userId/'),
+      headers: headers,
+    );
+
+    final body = response.body;
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      try {
+        final decoded = jsonDecode(body);
+        final message = decoded is Map<String, dynamic> && decoded['detail'] != null
+            ? decoded['detail'].toString()
+            : 'Student removed';
+        return {'success': true, 'message': message};
+      } catch (_) {
+        return {'success': true, 'message': 'Student removed'};
+      }
+    } else {
+      return {'success': false, 'error': _extractError(body)};
     }
   }
 

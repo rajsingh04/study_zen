@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'authentication',
     'subject',
+    'assignment',
+    'material',
     'rest_framework',
     # token_blacklist removed because project uses a custom User model
     # that is not configured as AUTH_USER_MODEL. See notes below.
@@ -187,3 +189,8 @@ SIMPLE_JWT = {
     # Refresh token can be the same or longer; kept at 30 days here.
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }
+
+
+# Media files (user uploaded)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

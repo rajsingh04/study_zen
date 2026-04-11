@@ -237,7 +237,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     clipBehavior: Clip.none,
                     scrollDirection: Axis.horizontal,
                     itemCount: recentSubjects.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 15),
+                    separatorBuilder: (_, _) => const SizedBox(width: 15),
                     itemBuilder: (context, index) {
                       final subject = recentSubjects[index];
                       return GestureDetector(
@@ -550,7 +550,7 @@ class _CoursesTab extends StatelessWidget {
   final Future<List<SubjectModel>>? future;
   final VoidCallback onRefresh;
 
-  const _CoursesTab({Key? key, required this.future, required this.onRefresh}) : super(key: key);
+  const _CoursesTab({super.key, required this.future, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -643,7 +643,7 @@ class _CoursesTab extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: subjects.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final subject = subjects[index];
                     final owner = subject.ownerName;
@@ -759,8 +759,7 @@ class _CourseStatCard extends StatelessWidget {
   final String label;
   final String value;
 
-  const _CourseStatCard({Key? key, required this.icon, required this.label, required this.value})
-      : super(key: key);
+  const _CourseStatCard({super.key, required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {

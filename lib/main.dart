@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:study_zen/bloc/userbloc/user_bloc.dart';
-import 'package:study_zen/screens/login_screen.dart';
-import 'package:study_zen/screens/register_screen.dart';
 import 'package:study_zen/screens/splash_screen.dart';
 
 void main() {

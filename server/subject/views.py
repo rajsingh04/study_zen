@@ -1,6 +1,7 @@
 from .models import Subject
 from .serializer import SubjectSerializer
 from authentication.models import User
+from authentication.serializer import UserSerializer
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -123,3 +124,59 @@ class SubjectEnrollView(APIView):
             return Response({'detail': 'You are not enrolled in this subject.'}, status=status.HTTP_400_BAD_REQUEST)
         subject.enrolled_students.remove(user)
         return Response({'detail': 'You have been unenrolled from this subject.'}, status=status.HTTP_200_OK)
+
+
+class SubjectEnrolledStudentsView(APIView):
+    """Return all users currently enrolled in a particular subject.
+
+    Intended primarily for teachers to view the roster of a class.
+    Only the subject owner (teacher) or an enrolled student may access
+    this endpoint.
+    """
+
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk, *args, **kwargs):
+        user = _get_current_user_from_token(request)
+        try:
+            subject = Subject.objects.get(pk=pk)
+        except Subject.DoesNotExist:
+            return Response({'detail': 'Subject not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Allow owner or enrolled students to view the roster
+        if user != subject.owner and user not in subject.enrolled_students.all():
+            return Response({'detail': 'You are not enrolled in this subject.'}, status=status.HTTP_403_FORBIDDEN)
+
+        students = subject.enrolled_students.all()
+        serializer = UserSerializer(students, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SubjectRemoveStudentView(APIView):
+    """Allow the subject owner (teacher) to unenroll a specific student."""
+
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def delete(self, request, pk, user_id, *args, **kwargs):
+        current_user = _get_current_user_from_token(request)
+        try:
+            subject = Subject.objects.get(pk=pk)
+        except Subject.DoesNotExist:
+            return Response({'detail': 'Subject not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Only the owner (teacher) can remove students from the class
+        if subject.owner != current_user:
+            return Response({'detail': 'Only the owner can remove students from this subject.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            student = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if student not in subject.enrolled_students.all():
+            return Response({'detail': 'This student is not enrolled in the subject.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        subject.enrolled_students.remove(student)
+        return Response({'detail': 'Student has been unenrolled from this subject.'}, status=status.HTTP_200_OK)

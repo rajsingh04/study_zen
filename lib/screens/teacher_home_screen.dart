@@ -283,7 +283,7 @@ class _HomeTab extends StatelessWidget {
   final Future<List<SubjectModel>>? subjectsFuture;
   final VoidCallback onShowAllSubjects;
 
-  const _HomeTab({Key? key, required this.subjectsFuture, required this.onShowAllSubjects}) : super(key: key);
+  const _HomeTab({super.key, required this.subjectsFuture, required this.onShowAllSubjects});
 
   @override
   Widget build(BuildContext context) {
@@ -462,7 +462,7 @@ class _HomeTab extends StatelessWidget {
                   return ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: recent.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
                       final subject = recent[index];
                       return GestureDetector(
@@ -538,7 +538,7 @@ Widget _lessonTile(String title, String subtitle) {
 class _SubjectsTab extends StatelessWidget {
   final Future<List<SubjectModel>>? future;
 
-  const _SubjectsTab({Key? key, required this.future}) : super(key: key);
+  const _SubjectsTab({super.key, required this.future});
 
   @override
   Widget build(BuildContext context) {
@@ -634,7 +634,7 @@ class _SubjectsTab extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: subjects.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final subject = subjects[index];
                     final description = subject.description?.isNotEmpty == true
@@ -740,7 +740,7 @@ class _SubjectsTab extends StatelessWidget {
 }
 
 class _AiTab extends StatelessWidget {
-  const _AiTab({Key? key}) : super(key: key);
+  const _AiTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -763,7 +763,7 @@ class _AiTab extends StatelessWidget {
 }
 
 class _ProfileTab extends StatelessWidget {
-  const _ProfileTab({Key? key}) : super(key: key);
+  const _ProfileTab({super.key});
 
   @override
   Widget build(BuildContext context) {
