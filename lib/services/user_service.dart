@@ -143,4 +143,20 @@ class UserService {
       return {'success': false, 'error': e.toString()};
     }
   }
+  Future<void> logout() async {
+        try {
+          if (kIsWeb) {
+            // Clear in-memory tokens used on web
+            accessToken = null;
+            refreshToken = null;
+          } else {
+            final storage = FlutterSecureStorage();
+            await storage.delete(key: 'user');
+            await storage.delete(key: 'access');
+            await storage.delete(key: 'refresh');
+          }
+        } catch (e) {
+          log('Error during logout: $e');
+        }
+      }
 }

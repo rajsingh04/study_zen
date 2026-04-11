@@ -181,6 +181,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    # Access tokens stay valid for 30 days so users
+    # don't get logged out frequently on the frontend.
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    # Refresh token can be the same or longer; kept at 30 days here.
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }

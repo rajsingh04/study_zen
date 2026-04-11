@@ -4,8 +4,13 @@ import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
 import 'package:study_zen/bloc/userbloc/user_bloc.dart';
 import 'package:study_zen/bloc/userbloc/user_state.dart';
 import 'package:study_zen/utils/widget_style.dart';
+import 'package:study_zen/utils/theme.dart';
 import 'package:study_zen/models/subject_model.dart';
 import 'package:study_zen/services/subject_service.dart';
+import 'package:study_zen/screens/profile_screen.dart';
+import 'package:study_zen/screens/subject_detail_screen.dart';
+import 'package:study_zen/services/user_service.dart';
+import 'package:study_zen/screens/login_screen.dart';
 
 class TeacherHomeScreen extends StatefulWidget {
   const TeacherHomeScreen({super.key});
@@ -44,14 +49,21 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   Widget _buildPage() {
     switch (_selectedIndex) {
       case 0:
-        return const _HomeTab();
+        return _HomeTab(
+          subjectsFuture: _subjectsFuture,
+          onShowAllSubjects: () {
+            setState(() {
+              _selectedIndex = 1;
+            });
+          },
+        );
       case 1:
         return _SubjectsTab(future: _subjectsFuture);
       case 2:
         return const _AiTab();
       case 3:
       default:
-        return const _ProfileTab();
+        return const ProfileScreen();
     }
   }
 
@@ -62,146 +74,177 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
     await showDialog(
       context: context,
       builder: (ctx) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE8F4F8), Color(0xFFFFFFFF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Add New Subject',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => Navigator.of(ctx).pop(),
+        bool isCreating = false;
+
+        return StatefulBuilder(
+          builder: (ctx, setStateDialog) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFE8F4F8), Color(0xFFFFFFFF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Create a subject for your classes. Students will be able to enroll in it.',
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Subject name',
-                    prefixIcon: const Icon(Icons.book_outlined),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF67B0A7), width: 1.5),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    alignLabelWithHint: true,
-                    prefixIcon: const Icon(Icons.description_outlined),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF67B0A7), width: 1.5),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Cancel'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Add New Subject',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20,),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _accent,
-                        shape: RoundedRectangleBorder(
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Create a subject for your classes. Students will be able to enroll in it.',
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Subject name',
+                        prefixIcon: const Icon(Icons.book_outlined),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF67B0A7), width: 1.5),
                         ),
                       ),
-                      onPressed: () async {
-                        final name = nameController.text.trim();
-                        final description = descriptionController.text.trim();
-                        if (name.isEmpty) return;
-                        final result = await _subjectService.createSubject(name, description);
-                        if (result['success'] == true) {
-                          if (mounted) {
-                            Navigator.of(ctx).pop();
-                            setState(() {
-                              _subjectsFuture = _subjectService.fetchSubjects();
-                            }); // refresh subjects tab
-                            IconSnackBar.show(
-                              context,
-                              snackBarType: SnackBarType.success,
-                              label: 'Subject created successfully',
-                              backgroundColor: Colors.green,
-                            );
-                          }
-                        } else {
-                          final error = result['error']?.toString() ?? 'Failed to create subject';
-                          IconSnackBar.show(
-                            context,
-                            snackBarType: SnackBarType.alert,
-                            label: error,
-                            backgroundColor: Colors.red,
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.check, size: 18),
-                      label: const Text('Create'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descriptionController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Description',
+                        alignLabelWithHint: true,
+                        prefixIcon: const Icon(Icons.description_outlined),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB4CFD9)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF67B0A7), width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _accent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: isCreating
+                              ? null
+                              : () async {
+                                  final name = nameController.text.trim();
+                                  final description = descriptionController.text.trim();
+                                  if (name.isEmpty) return;
+
+                                  setStateDialog(() {
+                                    isCreating = true;
+                                  });
+
+                                  final result = await _subjectService.createSubject(name, description);
+                                  if (result['success'] == true) {
+                                    if (mounted) {
+                                      // ignore: use_build_context_synchronously
+                                      Navigator.of(ctx).pop();
+                                      setState(() {
+                                        _subjectsFuture = _subjectService.fetchSubjects();
+                                      }); // refresh subjects tab
+                                      IconSnackBar.show(
+                                        context,
+                                        snackBarType: SnackBarType.success,
+                                        label: 'Subject created successfully',
+                                        backgroundColor: Colors.green,
+                                      );
+                                    }
+                                  } else {
+                                    if (mounted) {
+                                      setStateDialog(() {
+                                        isCreating = false;
+                                      });
+                                      final error = result['error']?.toString() ?? 'Failed to create subject';
+                                      IconSnackBar.show(
+                                        context,
+                                        snackBarType: SnackBarType.alert,
+                                        label: error,
+                                        backgroundColor: Colors.red,
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: isCreating
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Icon(Icons.check, size: 18, color: Colors.white,),
+                          label: Text(
+                            isCreating ? 'Creating...' : 'Create',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -210,13 +253,13 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 231, 244, 249),
+      backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(child: _buildPage()),
       floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
               onPressed: _openAddSubjectDialog,
               backgroundColor: _accent,
-              child: const Icon(Icons.add),
+              child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
       bottomNavigationBar: BottomNavigationBar(
@@ -237,7 +280,10 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
 }
 
 class _HomeTab extends StatelessWidget {
-  const _HomeTab({Key? key}) : super(key: key);
+  final Future<List<SubjectModel>>? subjectsFuture;
+  final VoidCallback onShowAllSubjects;
+
+  const _HomeTab({Key? key, required this.subjectsFuture, required this.onShowAllSubjects}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -259,10 +305,7 @@ class _HomeTab extends StatelessWidget {
                     Image.asset('assets/images/logo.png', height: 40, width: 40),
                     const SizedBox(width: 8),
                     ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFF67B0A7), Color(0xFF81C39A)],
-                        stops: [0.3, 1.0],
-                      ).createShader(bounds),
+                      shaderCallback: (bounds) => headerGradient.createShader(bounds),
                       child: const Text(
                         'Study Zen',
                         style: TextStyle(
@@ -288,11 +331,7 @@ class _HomeTab extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF669DAB), Color(0xFF81C39A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: headerGradient,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -325,31 +364,126 @@ class _HomeTab extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Stats row
-            Row(
-              children: [
-                Expanded(child: statCardWidget(Icons.view_module_outlined, 'Classes', '4', accent: accent, whiteBackground: true)),
-                const SizedBox(width: 12),
-                Expanded(child: statCardWidget(Icons.person_outline, 'Students', '128', accent: accent, whiteBackground: true)),
-                const SizedBox(width: 12),
-                Expanded(child: statCardWidget(Icons.assignment_outlined, 'Assignments', '6', accent: accent, whiteBackground: true)),
-              ],
+            // Stats row (dynamic: total subjects and total enrolled students)
+            FutureBuilder<List<SubjectModel>>(
+              future: subjectsFuture,
+              builder: (context, snapshot) {
+                int totalClasses = 0;
+                int totalStudents = 0;
+                try {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    final subjects = snapshot.data!;
+                    totalClasses = subjects.length;
+                    totalStudents = subjects.fold<int>(
+                      0,
+                      (sum, s) => sum + (s.enrolledCount),
+                    );
+                  }
+                } catch (_) {
+                  // If anything goes wrong while computing stats,
+                  // fall back to zeros instead of crashing the UI.
+                  totalClasses = snapshot.data?.length ?? 0;
+                  totalStudents = 0;
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: statCardWidget(
+                        Icons.view_module_outlined,
+                        'Classes',
+                        totalClasses.toString(),
+                        accent: accent,
+                        whiteBackground: true,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: statCardWidget(
+                        Icons.person_outline,
+                        'Students',
+                        totalStudents.toString(),
+                        accent: accent,
+                        whiteBackground: true,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: statCardWidget(
+                        Icons.assignment_outlined,
+                        'Assignments',
+                        '6',
+                        accent: accent,
+                        whiteBackground: true,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 18),
 
-            // Upcoming lessons
-            const Text('Upcoming Lessons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            // Recent subjects
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Recent Subjects', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                TextButton(
+                  onPressed: onShowAllSubjects,
+                  child: const Text('Show All'),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 120,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  lessonTileWidget('Math: Algebra II', 'Today • 10:00 AM', gradientColors: [const Color(0xFF669DAB), const Color(0xFF81C39A)]),
-                  lessonTileWidget('Physics: Mechanics', 'Today • 2:00 PM', gradientColors: [const Color(0xFF67B0A7), const Color(0xFF81C39A)]),
-                  lessonTileWidget('Chemistry: Lab', 'Tomorrow • 11:00 AM', gradientColors: [const Color(0xFF6A9DB9), const Color(0xFF90C2C3)]),
-                ],
+              height: 160,
+              child: FutureBuilder<List<SubjectModel>>(
+                future: subjectsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    final message = snapshot.error.toString();
+                    if (message.contains('Token is invalid or expired')) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _handleTokenExpired(context);
+                      });
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    return const Center(child: Text('Failed to load subjects'));
+                  }
+                  final subjects = snapshot.data ?? [];
+                  if (subjects.isEmpty) {
+                    return const Center(child: Text('No subjects yet. Tap + to add one.'));
+                  }
+                  final recent = subjects.reversed.take(3).toList();
+                  return ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: recent.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      final subject = recent[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SubjectDetailScreen(subject: subject),
+                            ),
+                          );
+                        },
+                        child: courseCard(
+                          subject.name,
+                          '',
+                          Icons.menu_book_outlined,
+                          const [Color(0xFF669DAB), Color(0xFF81C39A)],
+                          width: 150,
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
 
@@ -370,29 +504,7 @@ class _HomeTab extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 18),
-
-            // Analytics summary
-            Card(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Class Completion Rate', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    LinearProgressIndicator(value: 0.72, color: accent, backgroundColor: accent.withOpacity(0.2)),
-                    const SizedBox(height: 8),
-                    const Text('72% of lessons completed this term', style: TextStyle(color: Colors.black54)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -439,30 +551,187 @@ class _SubjectsTab extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Failed to load subjects: ${snapshot.error}'));
+            final message = snapshot.error.toString();
+            if (message.contains('Token is invalid or expired')) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _handleTokenExpired(context);
+              });
+              return const Center(child: CircularProgressIndicator());
+            }
+            return Center(child: Text('Failed to load subjects: $message'));
           }
           final subjects = snapshot.data ?? [];
           if (subjects.isEmpty) {
             return const Center(child: Text('No subjects yet. Use + to add one.'));
           }
-          return ListView.separated(
-            itemBuilder: (context, index) {
-              final subject = subjects[index];
-              return ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFF6B90AD),
-                  child: Icon(Icons.book, color: Colors.white),
+          const accent = Color(0xFF67B0A7);
+          final completedCount = subjects.where((s) => s.isCompleted).length;
+          final activeCount = subjects.length - completedCount;
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                const Text(
+                  'Your Subjects',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1C1C1C),
+                  ),
                 ),
-                title: Text(subject.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(subject.description?.isNotEmpty == true ? subject.description! : 'Tap to view details'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: navigate to subject detail page when implemented
-                },
-              );
-            },
-            separatorBuilder: (_, __) => const Divider(),
-            itemCount: subjects.length,
+                const SizedBox(height: 4),
+                const Text(
+                  'All the classes you have created for your students.',
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: statCardWidget(
+                        Icons.menu_book_outlined,
+                        'Total subjects',
+                        subjects.length.toString(),
+                        accent: accent,
+                        whiteBackground: true,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: statCardWidget(
+                        Icons.people_outline,
+                        'Active classes',
+                        activeCount.toString(),
+                        accent: accent,
+                        whiteBackground: true,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: statCardWidget(
+                        Icons.check_circle_outline,
+                        'Completed',
+                        completedCount.toString(),
+                        accent: accent,
+                        whiteBackground: true,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Subject List',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1C1C1C),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: subjects.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final subject = subjects[index];
+                    final description = subject.description?.isNotEmpty == true
+                        ? subject.description!
+                        : 'Tap to manage materials, assignments and quizzes';
+                    return Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 3,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.authBackgroundTop.withOpacity(0.06),
+                              Colors.white,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                colors: [AppColors.primary, AppColors.secondary],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: const Icon(Icons.menu_book_outlined, color: Colors.white, size: 20),
+                          ),
+                          title: Text(
+                            subject.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Color(0xFF1C1C1C),
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                              ),
+                            ],
+                          ),
+                          trailing: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.9),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              subject.isCompleted ? Icons.check_circle : Icons.chevron_right,
+                              size: 18,
+                              color: subject.isCompleted ? Colors.green : AppColors.primary,
+                            ),
+                          ),
+                          onTap: () async {
+                            final refreshed = await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => SubjectDetailScreen(subject: subject),
+                              ),
+                            );
+                            if (refreshed == true) {
+                              // Trigger a rebuild of the subjects tab by telling the
+                              // parent TeacherHomeScreen to reload subjects.
+                              final state = context.findAncestorStateOfType<_TeacherHomeScreenState>();
+                              state?.setState(() {
+                                state._subjectsFuture = state._subjectService.fetchSubjects();
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -520,4 +789,24 @@ class _ProfileTab extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _handleTokenExpired(BuildContext context) async {
+  final userService = UserService();
+  await userService.logout();
+
+  final navigator = Navigator.of(context);
+  if (!navigator.mounted) return;
+
+  IconSnackBar.show(
+    navigator.context,
+    snackBarType: SnackBarType.alert,
+    label: 'Session expired. Please log in again.',
+    backgroundColor: Colors.red,
+  );
+
+  navigator.pushAndRemoveUntil(
+    MaterialPageRoute(builder: (_) => const LoginScreen()),
+    (route) => false,
+  );
 }

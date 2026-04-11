@@ -105,6 +105,8 @@ class SubjectEnrollView(APIView):
             subject = Subject.objects.get(pk=pk)
         except Subject.DoesNotExist:
             return Response({'detail': 'Subject not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if subject.is_completed:
+            return Response({'detail': 'This subject is completed and cannot be joined.'}, status=status.HTTP_400_BAD_REQUEST)
         if user == subject.owner:
             return Response({'detail': 'Owner is already part of the subject.'}, status=status.HTTP_400_BAD_REQUEST)
         subject.enrolled_students.add(user)

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:study_zen/bloc/userbloc/user_bloc.dart';
 import 'package:study_zen/bloc/userbloc/user_state.dart';
 import 'package:study_zen/utils/widget_style.dart';
+import 'package:study_zen/utils/theme.dart';
 import '../bloc/userbloc/user_event.dart';
 import 'register_screen.dart';
 import 'student_home_screen.dart';
@@ -27,20 +28,31 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // _checkAutoLogin();
+    _checkAutoLogin();
   }
 
-  // void _checkAutoLogin() async {
-  //   final user = await _userService.getStoredUser();
-  //   if (user != null) {
-  //     WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
-  //       );
-  //     });
-  //   }
-  // }
+  void _checkAutoLogin() async {
+    final user = await _userService.getStoredUser();
+    if (user != null && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Seed the UserBloc so home screens can greet by name
+        context.read<UserBloc>().add(OnAutoLoginEvent(user: user));
+
+        final accountType = user.accountType.toUpperCase();
+        if (accountType == 'TEACHER') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TeacherHomeScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
+          );
+        }
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
 
           if (state is UserLoaded) {
-            isLoading = false;
+            setState(() {
+              isLoading = false;
+            });
             IconSnackBar.show(
               context,
               snackBarType: SnackBarType.success,
@@ -69,7 +83,9 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             }
           } else if (state is UserError) {
-            isLoading = false;
+            setState(() {
+              isLoading = false;
+            });
             IconSnackBar.show(
               context,
               snackBarType: SnackBarType.alert,
@@ -77,17 +93,14 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: Colors.red,
             );
           } else if (state is UserLoading) {
-            isLoading = true;
+            setState(() {
+              isLoading = true;
+            });
           }
         },
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFF8FBFB), Color(0xFFE2F1ED)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              stops: [0.0, 1.0],
-            ),
+          decoration: const BoxDecoration(
+            gradient: authBackgroundGradient,
           ),
           child: Center(
             child: SingleChildScrollView(

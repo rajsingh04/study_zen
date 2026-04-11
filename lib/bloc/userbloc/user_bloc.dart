@@ -39,5 +39,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           emit(UserError("An error occurred: $e"));
         }
       });
+
+    on<OnAutoLoginEvent>((event, emit) async {
+      // Seed the bloc with a user loaded from secure storage
+      emit(UserLoaded(event.user));
+    });
    }
 }

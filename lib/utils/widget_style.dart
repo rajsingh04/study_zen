@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:study_zen/utils/theme.dart';
+
   TextFormField inputField(String hint, IconData icon, {bool isPassword = false, TextEditingController? controller}) {
   return TextFormField(
     obscureText: isPassword,
@@ -29,15 +31,6 @@ import 'package:flutter/material.dart';
   );
 }
 
-Gradient backgroundGradient() {
-  return LinearGradient(
-    colors: [Color(0xFF6B90AD), Color(0xFF86B599)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    stops: [0.0, 1.0],
-  );
-}
-
 ElevatedButton styledButton(String text, VoidCallback onPressed, bool isLoading) {
   return ElevatedButton(
     onPressed: isLoading ? null : onPressed,
@@ -49,7 +42,7 @@ ElevatedButton styledButton(String text, VoidCallback onPressed, bool isLoading)
     ),
     child: Ink(
       decoration: BoxDecoration(
-        gradient: backgroundGradient(),
+        gradient: buttonGradient,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
@@ -104,11 +97,6 @@ Widget courseCard(String title, String subtitle, IconData icon, List<Color> grad
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1C1C1C)),
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.grey, fontSize: 11),
-              ),
             ],
           ),
         ),
@@ -158,7 +146,7 @@ Widget taskItem(String title, String duration, bool isCompleted) {
 
 // Reusable stat card for dashboards
 Widget statCardWidget(IconData icon, String title, String value,
-    {Color accent = const Color(0xFF6B90AD), List<Color>? gradientColors, bool whiteBackground = false}) {
+  {Color accent = AppColors.primary, List<Color>? gradientColors, bool whiteBackground = false}) {
   if (whiteBackground) {
     return Container(
       decoration: BoxDecoration(
@@ -206,7 +194,7 @@ Widget statCardWidget(IconData icon, String title, String value,
 
 // Reusable lesson tile used in teacher dashboard
 Widget lessonTileWidget(String title, String subtitle, {List<Color>? gradientColors}) {
-  final colors = gradientColors ?? [const Color(0xFF669DAB), const Color(0xFF81C39A)];
+  final colors = gradientColors ?? const [Color(0xFF669DAB), Color(0xFF81C39A)];
   return Container(
     width: 240,
     margin: const EdgeInsets.only(right: 12),
