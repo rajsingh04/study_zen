@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import AccessToken
+from django.http import HttpResponse
 
 
 def _get_current_user_from_token(request):
@@ -123,14 +124,16 @@ class SubmissionListCreateView(APIView):
 		except Assignment.DoesNotExist:
 			return Response({'detail': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+		# NOTE: Submissions store files as a Postgres blob. Avoid fetching file_blob
+		# for list endpoints; it can be very large and slow.
 		if getattr(user, 'account_type', '').upper() == 'TEACHER':
 			if assignment.owner != user:
 				return Response({'detail': 'Only the owner can view submissions.'}, status=status.HTTP_403_FORBIDDEN)
-			submissions = assignment.submissions.all()
+			submissions = assignment.submissions.select_related('student').defer('file_blob').all()
 		else:
-			submissions = assignment.submissions.filter(student=user)
+			submissions = assignment.submissions.select_related('student').defer('file_blob').filter(student=user)
 
-		serializer = SubmissionSerializer(submissions, many=True)
+		serializer = SubmissionSerializer(submissions, many=True, context={"request": request})
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	def post(self, request, pk, *args, **kwargs):
@@ -143,15 +146,42 @@ class SubmissionListCreateView(APIView):
 		except Assignment.DoesNotExist:
 			return Response({'detail': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-		serializer = SubmissionSerializer(data=request.data)
+		serializer = SubmissionSerializer(data=request.data, context={"request": request})
 		if serializer.is_valid():
 			serializer.save(student=user, assignment=assignment)
 			return Response(serializer.data, status=status.HTTP_201_CREATED)
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class SubmissionFileDownloadView(APIView):
+	"""Download the submitted file stored as a Postgres blob."""
+
+	authentication_classes = []
+	permission_classes = [permissions.AllowAny]
+
+	def get(self, request, pk, *args, **kwargs):
+		user = _get_current_user_from_token(request)
+		try:
+			submission = Submission.objects.select_related("assignment", "student").get(pk=pk)
+		except Submission.DoesNotExist:
+			return Response({"detail": "Submission not found."}, status=status.HTTP_404_NOT_FOUND)
+
+		# teacher owner of the assignment or the student may download
+		if submission.student != user and submission.assignment.owner != user:
+			return Response({"detail": "You are not allowed to view this submission."}, status=status.HTTP_403_FORBIDDEN)
+
+		if not submission.file_blob:
+			return Response({"detail": "No file available."}, status=status.HTTP_404_NOT_FOUND)
+
+		content_type = submission.file_content_type or "application/octet-stream"
+		resp = HttpResponse(submission.file_blob, content_type=content_type)
+		filename = submission.file_name or f"submission-{submission.id}"
+		resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+		return resp
+
+
 class SubmissionDetailView(generics.RetrieveUpdateDestroyAPIView):
-	queryset = Submission.objects.all()
+	queryset = Submission.objects.select_related('assignment', 'student').defer('file_blob').all()
 	serializer_class = SubmissionSerializer
 	authentication_classes = []
 	permission_classes = [permissions.AllowAny]
@@ -162,7 +192,7 @@ class SubmissionDetailView(generics.RetrieveUpdateDestroyAPIView):
 		# teacher owner of the assignment or the student may view
 		if submission.student != user and submission.assignment.owner != user:
 			return Response({'detail': 'You are not allowed to view this submission.'}, status=status.HTTP_403_FORBIDDEN)
-		return Response(self.serializer_class(submission).data, status=status.HTTP_200_OK)
+		return Response(self.serializer_class(submission, context={"request": request}).data, status=status.HTTP_200_OK)
 
 	def put(self, request, *args, **kwargs):
 		user = _get_current_user_from_token(request)

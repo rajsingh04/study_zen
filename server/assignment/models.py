@@ -25,7 +25,9 @@ class Assignment(models.Model):
 class Submission(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name="submissions")
     student = models.ForeignKey("authentication.User", on_delete=models.CASCADE, related_name="submissions")
-    file = models.FileField(upload_to="submissions/%Y/%m/%d/")
+    file_blob = models.BinaryField(null=True, blank=True)
+    file_name = models.CharField(max_length=255, blank=True, default="")
+    file_content_type = models.CharField(max_length=127, blank=True, default="")
     comments = models.TextField(blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     grade = models.CharField(max_length=50, blank=True, null=True)

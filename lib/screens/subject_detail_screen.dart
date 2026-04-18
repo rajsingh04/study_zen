@@ -51,6 +51,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
   bool _loadingMaterials = true;
   bool _initialAssignmentsDone = false;
   bool _initialMaterialsDone = false;
+  bool _initialSubmissionStatusDone = false;
+
+  final Map<int, bool> _submittingAssignment = <int, bool>{};
+  final Set<int> _submittedAssignmentIds = <int>{};
 
   OverlayEntry? _toastEntry;
   Timer? _toastTimer;
@@ -153,6 +157,11 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
   }
 
   Future<void> _loadAssignments() async {
+    final st = context.read<UserBloc>().state;
+    final userLoaded = st is UserLoaded;
+    final isTeacher = userLoaded && st.user.accountType.toUpperCase() == 'TEACHER';
+    final gateSubmissionStatus = userLoaded && !isTeacher;
+
     if (mounted) {
       setState(() {
         _loadingAssignments = true;
@@ -172,8 +181,23 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         if (!_initialAssignmentsDone) {
           _initialAssignmentsDone = true;
         }
-        _initialLoading = !(_initialAssignmentsDone && _initialMaterialsDone);
+        _initialLoading = !(_initialAssignmentsDone &&
+            _initialMaterialsDone &&
+            (!gateSubmissionStatus || _initialSubmissionStatusDone));
       });
+
+      // For students: detect existing submissions for the visible top-3.
+      // Keep the initial loader on until this completes so the button state is accurate.
+      if (gateSubmissionStatus && !_initialSubmissionStatusDone) {
+        await _primeSubmittedForVisibleAssignments();
+        if (!mounted) return;
+        setState(() {
+          _initialSubmissionStatusDone = true;
+          _initialLoading = !(_initialAssignmentsDone &&
+              _initialMaterialsDone &&
+              (!gateSubmissionStatus || _initialSubmissionStatusDone));
+        });
+      }
     } catch (e) {
       // ignore for now; assignments may be empty
       if (!mounted) return;
@@ -182,12 +206,50 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         if (!_initialAssignmentsDone) {
           _initialAssignmentsDone = true;
         }
-        _initialLoading = !(_initialAssignmentsDone && _initialMaterialsDone);
+        _initialLoading = !(_initialAssignmentsDone &&
+            _initialMaterialsDone &&
+            (!gateSubmissionStatus || _initialSubmissionStatusDone));
       });
+
+      if (gateSubmissionStatus && !_initialSubmissionStatusDone) {
+        await _primeSubmittedForVisibleAssignments();
+        if (!mounted) return;
+        setState(() {
+          _initialSubmissionStatusDone = true;
+          _initialLoading = !(_initialAssignmentsDone &&
+              _initialMaterialsDone &&
+              (!gateSubmissionStatus || _initialSubmissionStatusDone));
+        });
+      }
     }
   }
 
+  Future<void> _primeSubmittedForVisibleAssignments() async {
+    final ids = _assignments.take(3).map((a) => a.id).toList();
+    if (ids.isEmpty) return;
+
+    final futures = ids.map((id) async {
+      if (_submittedAssignmentIds.contains(id)) return;
+      try {
+        final subs = await _assignmentService.fetchSubmissions(id);
+        if (!mounted) return;
+        if (subs.isNotEmpty) {
+          setState(() => _submittedAssignmentIds.add(id));
+        }
+      } catch (_) {
+        // ignore
+      }
+    });
+
+    await Future.wait(futures);
+  }
+
   Future<void> _loadMaterials() async {
+    final st = context.read<UserBloc>().state;
+    final userLoaded = st is UserLoaded;
+    final isTeacher = userLoaded && st.user.accountType.toUpperCase() == 'TEACHER';
+    final gateSubmissionStatus = userLoaded && !isTeacher;
+
     if (mounted) {
       setState(() {
         _loadingMaterials = true;
@@ -207,7 +269,9 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         if (!_initialMaterialsDone) {
           _initialMaterialsDone = true;
         }
-        _initialLoading = !(_initialAssignmentsDone && _initialMaterialsDone);
+        _initialLoading = !(_initialAssignmentsDone &&
+            _initialMaterialsDone &&
+            (!gateSubmissionStatus || _initialSubmissionStatusDone));
       });
     } catch (e) {
       if (!mounted) return;
@@ -216,7 +280,9 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         if (!_initialMaterialsDone) {
           _initialMaterialsDone = true;
         }
-        _initialLoading = !(_initialAssignmentsDone && _initialMaterialsDone);
+        _initialLoading = !(_initialAssignmentsDone &&
+            _initialMaterialsDone &&
+            (!gateSubmissionStatus || _initialSubmissionStatusDone));
       });
     }
   }
@@ -875,6 +941,9 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                                 ),
                               );
                               if (changed == true) {
+                                if (!isTeacher) {
+                                  setState(() => _submittedAssignmentIds.add(a.id));
+                                }
                                 await _loadAssignments();
                               }
                             },
@@ -943,19 +1012,39 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                                     ],
                                   )
                                 : ElevatedButton(
-                                    onPressed: () async {
-                                      // student submit
-                                      final result = await _pickAndSubmit(a.id);
-                                      if (result == true) {
-                                        IconSnackBar.show(
-                                          context,
-                                          snackBarType: SnackBarType.success,
-                                          label: 'Submitted',
-                                          backgroundColor: Colors.green,
-                                        );
-                                      }
-                                    },
-                                    child: const Text('Submit'),
+                                    onPressed: (_submittingAssignment[a.id] == true || _submittedAssignmentIds.contains(a.id))
+                                        ? null
+                                        : () async {
+                                            // student submit
+                                            final result = await _pickAndSubmit(a.id);
+                                            if (result == true) {
+                                              IconSnackBar.show(
+                                                context,
+                                                snackBarType: SnackBarType.success,
+                                                label: 'Submitted',
+                                                backgroundColor: Colors.green,
+                                              );
+                                            }
+                                          },
+                                    child: (_submittingAssignment[a.id] == true)
+                                        ? const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                height: 16,
+                                                width: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                ),
+                                              ),
+                                              SizedBox(width: 8),
+                                              Text('Submitting...'),
+                                            ],
+                                          )
+                                        : Text(
+                                            _submittedAssignmentIds.contains(a.id) ? 'Submitted' : 'Submit',
+                                          ),
                                   ),
                           ),
                         );
@@ -1812,6 +1901,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
   }
 
   Future<bool?> _pickAndSubmit(int assignmentId) async {
+    if (_submittingAssignment[assignmentId] == true || _submittedAssignmentIds.contains(assignmentId)) {
+      return false;
+    }
+
     final picked = await _pickFile();
     if (picked.error != null) {
       if (!mounted) return false;
@@ -1834,8 +1927,31 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       );
       return false;
     }
+
+    if (mounted) {
+      setState(() => _submittingAssignment[assignmentId] = true);
+    }
     final res = await _assignmentService.submitAssignment(assignmentId: assignmentId, file: file);
-    return res['success'] == true;
+
+    if (!mounted) return false;
+    setState(() => _submittingAssignment[assignmentId] = false);
+
+    final ok = res['success'] == true;
+    if (ok) {
+      setState(() => _submittedAssignmentIds.add(assignmentId));
+    } else {
+      final err = res['error']?.toString();
+      if (err != null && err.isNotEmpty) {
+        IconSnackBar.show(
+          context,
+          snackBarType: SnackBarType.alert,
+          label: err,
+          backgroundColor: Colors.red,
+        );
+      }
+    }
+
+    return ok;
   }
 
   Widget _buildActionFab({

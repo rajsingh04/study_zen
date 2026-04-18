@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -168,6 +169,41 @@ class AssignmentService {
     } else {
       return {'success': false, 'error': _extractError(body)};
     }
+  }
+
+  Future<({Uint8List? bytes, String? fileName, String? contentType, int? statusCode, String? error})>
+      downloadSubmissionFile(int submissionId) async {
+    final token = await _getAccessToken();
+    final headers = <String, String>{};
+    if (token != null) headers['Authorization'] = 'Bearer $token';
+
+    final endpoint = Uri.parse('$uri/api/assignments/submissions/$submissionId/file/');
+    final resp = await http.get(endpoint, headers: headers);
+    if (resp.statusCode >= 200 && resp.statusCode < 300) {
+      final cd = resp.headers['content-disposition'] ?? resp.headers['Content-Disposition'];
+      String? name;
+      if (cd != null) {
+        final m = RegExp(r'filename\s*=\s*"?([^";]+)"?', caseSensitive: false).firstMatch(cd);
+        if (m != null) name = m.group(1);
+      }
+      final ct = resp.headers['content-type'] ?? resp.headers['Content-Type'];
+      return (
+        bytes: resp.bodyBytes,
+        fileName: name,
+        contentType: ct,
+        statusCode: resp.statusCode,
+        error: null,
+      );
+    }
+
+    final ct = resp.headers['content-type'] ?? resp.headers['Content-Type'];
+    return (
+      bytes: null,
+      fileName: null,
+      contentType: ct,
+      statusCode: resp.statusCode,
+      error: _extractError(resp.body),
+    );
   }
 
   String _extractError(String body) {

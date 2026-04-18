@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
 import 'package:intl/intl.dart';
 import 'package:study_zen/models/assignment_model.dart';
+import 'package:study_zen/screens/assignment_submissions_screen.dart';
 import 'package:study_zen/services/assignment_service.dart';
 import 'package:study_zen/utils/theme.dart';
 
@@ -35,6 +36,9 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   bool _hasChanged = false;
   bool _updating = false;
   bool _deleting = false;
+  bool _submitting = false;
+  bool _submittedByMe = false;
+  bool _initialLoading = false;
 
   OverlayEntry? _toastEntry;
   Timer? _toastTimer;
@@ -43,12 +47,56 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   void initState() {
     super.initState();
     _assignment = widget.assignment;
+    _initialLoading = !widget.isTeacher;
 
     if (widget.isTeacher && widget.openEditOnOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _openEditSheet();
       });
+    }
+
+    if (!widget.isTeacher) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _checkAlreadySubmitted();
+        if (!mounted) return;
+        setState(() => _initialLoading = false);
+      });
+    }
+  }
+
+  Widget _blockingLoader({String label = 'Loading...'}) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Container(
+          color: AppColors.scaffoldBackground.withOpacity(0.65),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: AppColors.primary),
+                const SizedBox(height: 12),
+                Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _checkAlreadySubmitted() async {
+    try {
+      final subs = await _assignmentService.fetchSubmissions(_assignment.id);
+      if (!mounted) return;
+      if (subs.isNotEmpty) {
+        setState(() => _submittedByMe = true);
+      }
+    } catch (_) {
+      // ignore
     }
   }
 
@@ -525,10 +573,14 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   }
 
   Future<void> _submit() async {
+    if (_submitting || _submittedByMe) return;
     FocusScope.of(context).unfocus();
+
+    setState(() => _submitting = true);
 
     final picked = await _pickFile();
     if (picked.error != null) {
+      if (mounted) setState(() => _submitting = false);
       _showOverlayToast(
         message: picked.error!,
         backgroundColor: Colors.red,
@@ -538,6 +590,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     }
     final file = picked.file;
     if (file == null) {
+      if (mounted) setState(() => _submitting = false);
       _showOverlayToast(
         message: 'No file selected',
         backgroundColor: Colors.orange,
@@ -553,7 +606,13 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
     if (!mounted) return;
 
+    setState(() => _submitting = false);
+
     if (res['success'] == true) {
+      setState(() {
+        _submittedByMe = true;
+        _hasChanged = true;
+      });
       IconSnackBar.show(
         context,
         snackBarType: SnackBarType.success,
@@ -696,6 +755,57 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
                 ],
               ),
             ),
+            if (widget.isTeacher) ...[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: AppColors.primary.withOpacity(0.08),
+                      child: const Icon(Icons.people_outline, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Submission info',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => AssignmentSubmissionsScreen(
+                              assignmentId: _assignment.id,
+                              assignmentTitle: _assignment.title,
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('View'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             if (!widget.isTeacher)
               SizedBox(
@@ -707,24 +817,31 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  onPressed: _submit,
-                  child: const Text('Submit assignment'),
+                  onPressed: (_submitting || _submittedByMe) ? null : _submit,
+                  child: _submitting
+                      ? const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Text('Submitting...'),
+                          ],
+                        )
+                      : Text(_submittedByMe ? 'Submitted' : 'Submit assignment'),
                 ),
               ),
                 ],
               ),
             ),
-            if (_updating || _deleting)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Container(
-                    color: AppColors.scaffoldBackground.withOpacity(0.55),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-              ),
+            if (_initialLoading) _blockingLoader(),
+            if (_updating || _deleting) _blockingLoader(label: 'Loading...'),
           ],
         ),
       ),

@@ -10,5 +10,5 @@ class AssignmentAdmin(admin.ModelAdmin):
 
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
-	list_display = ("id", "assignment", "student", "submitted_at")
+	list_display = ("id", "assignment", "student", "file_name", "submitted_at")
 	search_fields = ("assignment__title", "student__username")

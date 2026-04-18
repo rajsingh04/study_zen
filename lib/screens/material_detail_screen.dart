@@ -563,9 +563,19 @@ class _MaterialDetailScreenState extends State<MaterialDetailScreen> {
               Positioned.fill(
                 child: IgnorePointer(
                   child: Container(
-                    color: AppColors.scaffoldBackground.withOpacity(0.55),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                    color: AppColors.scaffoldBackground.withOpacity(0.65),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          CircularProgressIndicator(color: AppColors.primary),
+                          SizedBox(height: 12),
+                          Text(
+                            'Loading...',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
